@@ -6,7 +6,7 @@ from app.core.deps import require_admin
 from app.db.session import get_session
 from app.models.car import CarListing, CarStatus
 
-router = APIRouter(prefix="/v1/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.post("/cars/{car_id}/approve")

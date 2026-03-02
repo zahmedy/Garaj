@@ -5,7 +5,7 @@ from app.db.session import get_session
 from app.models.user import User, UserRole
 from app.core.config import settings
 
-router = APIRouter(prefix="/v1/dev", tags=["dev"])
+router = APIRouter(prefix="/dev", tags=["dev"])
 
 @router.post("/make-admin")
 def make_admin(phone_e164: str, session: Session = Depends(get_session)):
