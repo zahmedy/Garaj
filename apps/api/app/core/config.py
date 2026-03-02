@@ -3,7 +3,16 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-ROOT_ENV_FILE = Path(__file__).resolve().parents[4] / ".env"
+def _resolve_root_env_file() -> str:
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        candidate = parent / ".env"
+        if candidate.exists():
+            return str(candidate)
+    return ".env"
+
+
+ROOT_ENV_FILE = _resolve_root_env_file()
 
 class Settings(BaseSettings):
     ENV: str = "dev"
@@ -28,7 +37,7 @@ class Settings(BaseSettings):
     S3_PUBLIC_BASE_URL: str = "http://localhost:9000/garaj-media"
 
     model_config = SettingsConfigDict(
-        env_file=(str(ROOT_ENV_FILE), ".env"),
+        env_file=(ROOT_ENV_FILE, ".env"),
         extra="ignore",
     )
 
