@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
+from opensearchpy.exceptions import ConnectionError as OpenSearchConnectionError
+from opensearchpy.exceptions import TransportError
 from app.services.opensearch import client, ensure_index
 from app.core.config import settings
 
-router = APIRouter(prefix="/v1/search", tags=["search"])
+router = APIRouter(prefix="/search", tags=["search"])
 
 @router.get("/cars")
 def search_cars(
@@ -25,8 +27,14 @@ def search_cars(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=50),
 ):
-    ensure_index()
-    c = client()
+    try:
+        ensure_index()
+        c = client()
+    except (OpenSearchConnectionError, TransportError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Search service unavailable. Start OpenSearch at {settings.OPENSEARCH_URL}.",
+        ) from exc
 
     filters: list[dict] = []
     if city: filters.append({"term": {"city": city}})
@@ -80,7 +88,13 @@ def search_cars(
     elif sort == "mileage_asc":
         body["sort"] = [{"mileage_km": {"order": "asc"}}]
 
-    res = c.search(index=settings.OPENSEARCH_INDEX, body=body)
+    try:
+        res = c.search(index=settings.OPENSEARCH_INDEX, body=body)
+    except (OpenSearchConnectionError, TransportError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Search service unavailable. Start OpenSearch at {settings.OPENSEARCH_URL}.",
+        ) from exc
 
     hits = res["hits"]["hits"]
     total = res["hits"]["total"]["value"] if isinstance(res["hits"]["total"], dict) else res["hits"]["total"]
