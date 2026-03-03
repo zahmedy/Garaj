@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 from app.core.deps import get_current_user
 from app.db.session import get_session
 from app.models.user import User
-from app.models.car import CarListing, CarStatus
+from app.models.car import CarListing, CarStatus, CarMedia
 from app.schemas.car import CarCreate, CarUpdate, CarOut
 
 router = APIRouter(tags=["cars"])
@@ -124,6 +124,11 @@ def submit_car(
         raise HTTPException(status_code=400, detail="Missing title/description")
     if car.price_sar <= 0:
         raise HTTPException(status_code=400, detail="Invalid price")
+
+    # ensure min of 4 photos
+    photo_count = session.exec(select(func.count()).select_from(CarMedia).where(CarMedia.car_id == car.id)).one()
+    if int(photo_count) < 4:
+        raise HTTPException(status_code=400, detail="At least 4 photos required")
 
     car.status = CarStatus.pending_review
     car.updated_at = datetime.utcnow()
