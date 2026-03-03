@@ -12,3 +12,4 @@ class PresignResponse(BaseModel):
 class MediaCompleteRequest(BaseModel):
     storage_key: str
     public_url: str
+    is_cover: bool = False
